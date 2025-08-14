@@ -240,6 +240,9 @@ function startWeaponInspection(hasGunOil, takeGunOilCallback)
     if uiContainer then
         local state = createStateMachine(uiFlowBlock)
 
+        local removedOil = false
+        local canRemoveOil = false
+
         while shouldContinue(player) do
             DisableControlAction(0, GetHashKey("INPUT_NEXT_CAMERA"), true)
             --disables aim
@@ -259,7 +262,15 @@ function startWeaponInspection(hasGunOil, takeGunOilCallback)
                 else
                     local cleanProgress = Citizen.InvokeNative(0xBC864A70AD55E0C1, PlayerPedId(),
                         GetHashKey("INPUT_CONTEXT_X"), Citizen.ResultAsFloat())
-                    if cleanProgress > 0.0 then
+
+                    if not removedOil then
+                        TriggerServerEvent("inventory:removeOilGun")
+                        removedOil = true
+                    end
+
+                    -- print(" cleanProgress ", cleanProgress)
+
+                    if cleanProgress > 0.0 and cleanProgress <= 0.80 then
                         local weaponPermanentDegradation = GetWeaponPermanentDegradation(weaponObject)
                         local weaponDegradation = (initialWeaponDegradation + weaponPermanentDegradation) -
                         (cleanProgress * initialWeaponDegradation)
@@ -273,11 +284,13 @@ function startWeaponInspection(hasGunOil, takeGunOilCallback)
                         SetWeaponDirt(weaponObject, weaponDirt)
                         SetWeaponSoot(weaponObject, weaponSoot)
 
+                        -- print(" CLEAN ")
+
                         updateWeaponStats(player, uiContainer, weaponHash, weaponObject)
                     end
                 end
             elseif state == 3 then
-                cleanWeaponObject(weaponObject)
+                -- cleanWeaponObject(weaponObject)
                 updateWeaponStats(player, uiContainer, weaponHash, weaponObject)
                 state = 1
             end
@@ -286,6 +299,8 @@ function startWeaponInspection(hasGunOil, takeGunOilCallback)
         end
 
         cleanupInspectionMenu(uiFlowBlock, uiContainer)
+
+        PrepareSync()
     end
 end
 

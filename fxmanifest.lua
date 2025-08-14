@@ -11,6 +11,7 @@ shared_script '@frp_lib/library/linker.lua'
 
 client_scripts {
     'client/native_wrappers.lua',
+    'client/customization.lua',
     
     'client/main.lua',
 

@@ -134,11 +134,7 @@ local function getSkillLevelFromWeaponName( weaponHash )
         return
     end
 
-    local skills = {}
-
-    if Abilities and Abilities.getAllSkillsLevel then 
-        skills = Abilities.getAllSkillsLevel()
-    end 
+    local skills = Abilities.getAllSkillsLevel()
 
     local myLevel = 0
 

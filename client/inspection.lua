@@ -59,7 +59,7 @@ function LaunchWeaponInspecting(item)
             GetHashKey("INPUT_CONTEXT_X"), Citizen.ResultAsFloat())
 
             if cleanProgress > 0.0 then
-                WeaponInspectionUpdateInformations()
+                WeaponInspectionUpdateInformations(weaponEntityId, cleanProgress)
             end
         elseif state == 3 --[[ Loop ]] then
 
@@ -80,7 +80,7 @@ function LaunchWeaponInspecting(item)
     WeaponInspectionTerminate()
 end
 
-function WeaponInspectionUpdateInformations(weaponEntityIdl, cleanProgress)
+function WeaponInspectionUpdateInformations(weaponEntityId, cleanProgress)
     local weaponDamage         = Citizen.InvokeNative(0x904103D5D2333977, weaponEntityId, Citizen.ResultAsFloat())
     local weaponDegradation    = Citizen.InvokeNative(0x0D78E1097F89E637, weaponEntityId, Citizen.ResultAsFloat())
 
@@ -108,7 +108,7 @@ function WeaponInspectionStartInteraction(weaponHash)
         itemInteractionHash = `SHORTARM_HOLD_ENTER`
     end
 
-    SwapWeaponToPlayer(gPlayerPedId, weaponHash) 
+    SwapWeaponToPlayer(gPlayerPedId, weaponHash)
 
     Wait(100)
 

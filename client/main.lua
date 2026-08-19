@@ -1,9 +1,8 @@
-local Proxy = module("frp_lib", "lib/Proxy")
-local Tunnel = module("frp_lib", "lib/Tunnel")
-cAPI = Proxy.getInterface("API")
-Inventory = Tunnel.getInterface("inventory")
 
-Abilities = Proxy.getInterface("abilities")
+
+-- cAPI / Abilities são fornecidos por modules/bridge/<framework>/client.lua
+-- (carregado antes deste arquivo pelo fxmanifest).
+Inventory = Tunnel.getInterface("inventory")
 
 function Start()
     EquippedWeaponDegradationInit()
@@ -24,7 +23,7 @@ CreateThread(function()
     end
 end)
 
-AddEventHandler('ox_inventory:weaponInspectUsed', function(itemEncoded)
+AddEventHandler('nxt_inventory:weaponInspectUsed', function(itemEncoded)
     local item = itemEncoded
 
     if not next(item) then
@@ -35,7 +34,7 @@ AddEventHandler('ox_inventory:weaponInspectUsed', function(itemEncoded)
     local playerPed = PlayerPedId()
 
     if not HasPedGotWeapon(playerPed, weaponHash, 0, false) then
-        exports.ox_inventory:useSlot(itemEncoded.slot)
+        exports.nxt_inventory:useSlot(itemEncoded.slot)
     else
         SetCurrentPedWeapon(playerPed, weaponHash, false, 0, false, false)
     end
@@ -43,7 +42,7 @@ AddEventHandler('ox_inventory:weaponInspectUsed', function(itemEncoded)
     assert(not gIsInspecting, 'Esse script já está sendo executado!')
 
     local function usedOil()
-        local oil_gun = exports.ox_inventory:Search('slots', 'oil_gun')
+        local oil_gun = exports.nxt_inventory:Search('slots', 'oil_gun')
         if oil_gun and oil_gun[1] then
             local oilGun = oil_gun[1] 
             local oilGunMetadata = oilGun.metadata
@@ -53,7 +52,7 @@ AddEventHandler('ox_inventory:weaponInspectUsed', function(itemEncoded)
     end
 
     local function hasGunOil()  
-        local count = exports.ox_inventory:Search('count', 'oil_gun')
+        local count = exports.nxt_inventory:Search('count', 'oil_gun')
         return count >= 1
     end
 
@@ -141,58 +140,77 @@ local function getSkillLevelFromWeaponName( weaponHash )
     for skillName, level in pairs( skills ) do
         if string.find(weaponName:lower(), skillName:lower()) then
             myLevel = level
+            break
         end
     end
 
-    return myLevel <= 0 and normalRecoil or normalRecoil / myLevel
+    local fator = 1 - (myLevel / 100.0)
+
+    local recoilFinal = normalRecoil * fator
+
+    return recoilFinal
 end
 
 
-CreateThread(function()
-	while true do
-        local gPlayerPed = PlayerPedId()
+local cachedShootsAmount = {}
 
-		if IsPedShooting(gPlayerPed) and not IsPedInAnyVehicle(gPlayerPed) then
 
-            local _, wep = GetCurrentPedWeapon(gPlayerPed, true, 0, true)
-			_,cAmmo = GetAmmoInClip(gPlayerPed, wep)
+-- CreateThread(function()
+-- 	while true do
+--         local gPlayerPed = PlayerPedId()
 
-            local weaponRecoilAmount = getSkillLevelFromWeaponName( wep )
+-- 		if IsPedShooting(gPlayerPed) and not IsPedInAnyVehicle(gPlayerPed) then
 
-			if weaponRecoilAmount and weaponRecoilAmount ~= 0 then
-				tv = 0
+--             local _, wep = GetCurrentPedWeapon(gPlayerPed, true, 0, true)
+-- 			_,cAmmo = GetAmmoInClip(gPlayerPed, wep)
 
-                local randomP = math.random(-10, 10) / 10
+--             if not cachedShootsAmount[wep] then
+--                 cachedShootsAmount[wep] = 0 
+--             end
+
+--             cachedShootsAmount[wep] += 1
+
+--             if cachedShootsAmount[wep] >= 10 then
+--                 cachedShootsAmount[wep] = 0
+--                 TriggerServerEvent("frp:weapon:increaseSkill", GetWeapontypeGroup(wep))
+--             end
+
+--             local weaponRecoilAmount = getSkillLevelFromWeaponName( wep )
+
+-- 			if weaponRecoilAmount and weaponRecoilAmount ~= 0 then
+-- 				tv = 0
+
+--                 local randomP = math.random(-10, 10) / 10
                 
-                local isFirstPerson = Citizen.InvokeNative(0xD1BA66940E94C547)
-                if not isFirstPerson then
-                    repeat
-                        Wait(0)
-                        p = GetGameplayCamRelativePitch()
+--                 local isFirstPerson = Citizen.InvokeNative(0xD1BA66940E94C547)
+--                 if not isFirstPerson then
+--                     repeat
+--                         Wait(0)
+--                         p = GetGameplayCamRelativePitch()
         
-                        SetGameplayCamRelativePitch(p + 0.1 + randomP, 0.2)
+--                         SetGameplayCamRelativePitch(p + 0.1 + randomP, 0.2)
 
-                        tv = tv + 0.1
-                    until tv >= weaponRecoilAmount
-                else    
-                    repeat 
-						Wait(0)
-						p = GetGameplayCamRelativePitch()
+--                         tv = tv + 0.1
+--                     until tv >= weaponRecoilAmount
+--                 else    
+--                     repeat 
+-- 						Wait(0)
+-- 						p = GetGameplayCamRelativePitch()
 
-						if weaponRecoilAmount > 0.1 then
-							SetGameplayCamRelativePitch(p + 0.6 + randomP, 1.2)
-							tv = tv + 0.6
-						else
-							SetGameplayCamRelativePitch(p + 0.016 + randomP, 0.333)
-							tv = tv+0.1
-						end
+-- 						if weaponRecoilAmount > 0.1 then
+-- 							SetGameplayCamRelativePitch(p + 0.6 + randomP, 1.2)
+-- 							tv = tv + 0.6
+-- 						else
+-- 							SetGameplayCamRelativePitch(p + 0.016 + randomP, 0.333)
+-- 							tv = tv+0.1
+-- 						end
 
-					until tv >= weaponRecoilAmount
+-- 					until tv >= weaponRecoilAmount
 
-                end
-			end
-		end
+--                 end
+-- 			end
+-- 		end
 
-		Wait(0)
-	end
-end)
+-- 		Wait(0)
+-- 	end
+-- end)

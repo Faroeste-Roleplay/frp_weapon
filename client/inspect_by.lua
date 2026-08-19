@@ -265,12 +265,13 @@ function startWeaponInspection(hasGunOil, takeGunOilCallback)
 
                     if not removedOil then
                         TriggerServerEvent("inventory:removeOilGun")
+                        TriggerServerEvent('frp_weapon:cleanWeapon', { degradation = 0.0, soot = 0.0, dirt = 0.0, damage = 0.0 }, gEquippedWeaponItemId)
                         removedOil = true
                     end
 
                     -- print(" cleanProgress ", cleanProgress)
 
-                    if cleanProgress > 0.0 and cleanProgress <= 0.80 then
+                    if cleanProgress > 0.0 and cleanProgress <= 0.85 then
                         local weaponPermanentDegradation = GetWeaponPermanentDegradation(weaponObject)
                         local weaponDegradation = (initialWeaponDegradation + weaponPermanentDegradation) -
                         (cleanProgress * initialWeaponDegradation)

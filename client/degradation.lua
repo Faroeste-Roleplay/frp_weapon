@@ -9,7 +9,7 @@ local gEquippedWeaponEntityId = nil
 
 local gEquippedWeaponDegradationLastSync = nil
 
-local gEquippedWeaponItemId = nil
+gEquippedWeaponItemId = nil
 
 local gEquippedWeaponDegradation = nil
 
@@ -21,7 +21,7 @@ local gLastSyncSentAt = nil
 function EquippedWeaponDegradationInit()
     gProcessEquippedWeaponDegradation = true
 
-    AddEventHandler('ox_inventory:currentWeapon', function(weaponItem)
+    AddEventHandler('nxt_inventory:currentWeapon', function(weaponItem)
         local justEquipped = weaponItem ~= nil
         -- print(" currentWeapon :: ", weaponItem, justEquipped)
 
@@ -46,7 +46,7 @@ function EquippedWeaponDegradationInit()
         end
     end)
 
-    AddEventHandler('ox_inventory:equippedWeaponDegradationIsReady', function(weaponItemId)
+    AddEventHandler('nxt_inventory:equippedWeaponDegradationIsReady', function(weaponItemId)
         if weaponItemId == gEquippedWeaponItemId then
             gEquippedWeaponEntityId = GetCurrentPedWeaponEntityIndex(PlayerPedId(), 0)
             
@@ -106,6 +106,14 @@ end
 function ComputeEquippedWeaponDegradationStatsDelta()
     local delta = { }
 
+    if not gEquippedWeaponDegradationLastSync then
+        gEquippedWeaponDegradationLastSync = GetDegradationStatsForWeaponEntity(gEquippedWeaponEntityId)
+    end
+
+    if not gEquippedWeaponDegradation or not gEquippedWeaponDegradationLastSync then
+        return delta
+    end
+
     for stat, value in pairs(gEquippedWeaponDegradationLastSync) do
         
         local curr = gEquippedWeaponDegradation[stat]
@@ -133,8 +141,20 @@ function StoreEquippedWeaponDegradation()
 end
 
 function UpdateEquippedWeaponStoredStatsWithSyncedStatsDelta(deltaStats)
+    if type(deltaStats) ~= 'table' or table.type(deltaStats) == 'empty' then
+        return
+    end
+
+    if not gEquippedWeaponDegradationLastSync then
+        if gEquippedWeaponEntityId and DoesEntityExist(gEquippedWeaponEntityId) then
+            gEquippedWeaponDegradationLastSync = GetDegradationStatsForWeaponEntity(gEquippedWeaponEntityId)
+        else
+            return
+        end
+    end
+
     for stat, delta in pairs(deltaStats) do
-        gEquippedWeaponDegradationLastSync[stat] += delta
+        gEquippedWeaponDegradationLastSync[stat] = (gEquippedWeaponDegradationLastSync[stat] or 0) + delta
     end
 
     -- print('gEquippedWeaponDegradationLastSync', json.encode(gEquippedWeaponDegradationLastSync, { indent = true }))
@@ -156,6 +176,9 @@ function PrepareSync()
     -- print('Trying to send delta sync...')
 
     local delta = ComputeEquippedWeaponDegradationStatsDelta()
+    if type(delta) ~= 'table' then
+        return
+    end
 
     UpdateEquippedWeaponStoredStatsWithSyncedStatsDelta(delta)
 
@@ -167,7 +190,6 @@ function PrepareSync()
 end
 
 --
-
 --[[
 
 # Missing

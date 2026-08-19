@@ -1,3 +1,4 @@
+local Proxy = module("frp_lib", "lib/Proxy")
 
 Inventory = Proxy.getInterface("inventory")
 

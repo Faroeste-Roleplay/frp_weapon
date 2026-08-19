@@ -1,7 +1,6 @@
+local Tunnel = module("frp_lib", "lib/Tunnel")
 
 
--- cAPI / Abilities são fornecidos por modules/bridge/<framework>/client.lua
--- (carregado antes deste arquivo pelo fxmanifest).
 Inventory = Tunnel.getInterface("inventory")
 
 function Start()
@@ -18,9 +17,8 @@ RegisterNetEvent('FRP:onCharacterLoaded', Start)
 RegisterNetEvent('FRP:onCharacterLogout', Stop)
 
 CreateThread(function()
-    if cAPI.IsPlayerInitialized() then
-        Start()
-    end
+    Wait(10000)
+    Start()
 end)
 
 AddEventHandler('nxt_inventory:weaponInspectUsed', function(itemEncoded)
